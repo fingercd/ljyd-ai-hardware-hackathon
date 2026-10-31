@@ -1,4 +1,6 @@
 import http.client
+import json
+from types import SimpleNamespace
 import threading
 import unittest
 from unittest.mock import patch
@@ -46,6 +48,27 @@ class CameraWebTests(unittest.TestCase):
             status, body = self.request('POST', '/capture', self.headers())
             self.assertEqual(status, 503)
             self.assertIn(b'board absent', body)
+
+    def test_device_status_without_opening_serial(self):
+        with patch('serial.tools.list_ports.comports', return_value=[]):
+            status, body = self.request('GET', '/devices')
+            self.assertEqual(status, 200)
+            self.assertFalse(json.loads(body)['ready'])
+            self.assertIn('USB', json.loads(body)['message'])
+
+    def test_device_status_matches_only_board_and_requires_unique_port(self):
+        targets = [SimpleNamespace(device=name, vid=0x1A86, pid=0x55D3,
+                                   description='CH343') for name in ('COM3', 'COM4')]
+        bluetooth = SimpleNamespace(device='COM5', vid=None, pid=None,
+                                    description='Bluetooth')
+        with patch('serial.tools.list_ports.comports', return_value=[targets[0], bluetooth]):
+            state = camera_web.device_status()
+            self.assertTrue(state['ready'])
+            self.assertEqual([p['device'] for p in state['ports']], ['COM3'])
+        with patch('serial.tools.list_ports.comports', return_value=targets):
+            self.assertFalse(camera_web.device_status()['ready'])
+            self.assertTrue(camera_web.device_status('COM4')['ready'])
+            self.assertFalse(camera_web.device_status('COM5')['ready'])
 
     def test_busy(self):
         with camera_web.LOCK:

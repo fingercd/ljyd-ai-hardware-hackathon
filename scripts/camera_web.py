@@ -3,13 +3,14 @@ from __future__ import annotations
 
 import argparse
 import io
+import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import secrets
 import threading
 import webbrowser
 
-from scripts.camera_capture import receive_frame, select_port
+from scripts.camera_capture import TARGET_USB, receive_frame, select_port
 from scripts.camera_frame_decode import decode_capture, frame_png
 
 PAGE = Path(__file__).with_name('camera_web.html')
@@ -17,10 +18,32 @@ LOCK = threading.Lock()
 TOKEN = secrets.token_urlsafe(32)
 
 
+def device_status(port_name=None):
+    from serial.tools import list_ports
+    ports = list(list_ports.comports())
+    targets = [p for p in ports if (p.vid, p.pid) == TARGET_USB]
+    try:
+        selected = select_port(ports, port_name)
+    except ValueError:
+        if not targets:
+            message = '未检测到 CH343 开发板串口。请检查主板 USB 数据线和接口；亮灯不代表数据已连接。'
+        else:
+            message = '目标串口不唯一或指定端口不匹配，请在启动命令后加 --port COMx。'
+        ready = False
+    else:
+        message = f'已检测到 {selected} 开发板；尚未打开串口。'
+        ready = True
+    return {'ports': [{'device': p.device, 'description': p.description} for p in targets],
+            'ready': ready, 'message': message}
+
+
 def capture(port_name):
     import serial
     from serial.tools import list_ports
-    port = select_port(list(list_ports.comports()), port_name)
+    try:
+        port = select_port(list(list_ports.comports()), port_name)
+    except ValueError:
+        raise ValueError(device_status(port_name)['message']) from None
     stream = serial.Serial()
     stream.port, stream.baudrate, stream.timeout = port, 115200, 0.2
     stream.dtr, stream.rts = False, False
@@ -44,6 +67,10 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def do_GET(self):
+        if self.path == '/devices':
+            data = json.dumps(device_status(self.server.camera_port), ensure_ascii=False).encode('utf-8')
+            self.send_data(200, data, 'application/json; charset=utf-8')
+            return
         if self.path != '/':
             self.send_error(404)
             return
