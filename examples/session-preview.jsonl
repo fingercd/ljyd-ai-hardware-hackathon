@@ -1,0 +1,11 @@
+{"event_id":"agree","at":0,"kind":"start","data":{"task":"复习数学","mode":"splash","vibration_consent":true,"water_consent":true}}
+{"event_id":"simulated-ready","at":1,"kind":"device","data":{"online":true,"vibration_ready":true,"water_ready":true}}
+{"event_id":"absent-start","at":2,"kind":"observe","data":{"posture":"absent","confidence":0.95}}
+{"event_id":"absent-sustained","at":7,"kind":"observe","data":{"posture":"absent","confidence":0.95}}
+{"event_id":"checkin-answer","at":8,"kind":"checkin","data":{"answer":"distracted"}}
+{"event_id":"simulated-output","at":9,"kind":"receipt","data":{"request_id":"feedback:checkin-answer","state":"output_finished"}}
+{"event_id":"take-break","at":10,"kind":"break","data":{}}
+{"event_id":"observe-in-break","at":20,"kind":"observe","data":{"posture":"deviated","confidence":0.98}}
+{"event_id":"return","at":30,"kind":"resume","data":{}}
+{"event_id":"back-to-book","at":31,"kind":"observe","data":{"posture":"aligned","confidence":0.95}}
+{"event_id":"revoke","at":32,"kind":"revoke","data":{}}

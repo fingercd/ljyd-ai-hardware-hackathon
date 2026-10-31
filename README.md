@@ -111,7 +111,8 @@ SDK 与独立工具链已准备，作为定制与排障基础，不是第一次�
 | 模块 | 实际状态 |
 | :--- | :--- |
 | 产品定位、角色与路演 | 已形成方案；是设计成果，不等于功能落地 |
-| Git 与团队协作 | 公开仓库、贡献说明、CI 内容检查已建立 |
+| Git 与团队协作 | 公开仓库、贡献说明、CI 内容检查与本地规则测试已建立 |
+| 会话与安全规则 | 本地确定性逻辑已实现，41项单元测试通过；不是云端/实物闭环 |
 | SDK 与工具链 | 已安装；构建结果与限制见 [开发状态](docs/STATUS.md) |
 | 平台交互创建／调试预览 | 待实际配置和验证 |
 | 标准设备接入 | 待核对实物及设备身份 |
@@ -136,6 +137,15 @@ CONTRIBUTING.md       团队 Git、PR 和公开内容边界
 git clone --recurse-submodules https://github.com/fingercd/ljyd-ai-hardware-hackathon.git
 cd ljyd-ai-hardware-hackathon
 ```
+
+无需硬件可先运行规则回放：
+
+```powershell
+py -3.11 -m unittest discover -s tests -v
+py -3.11 -m study_dino examples/session-preview.jsonl
+```
+
+每行明确标记为本地模拟且未执行硬件。参数和输入格式见 [本地预览说明](docs/local-preview.md)，这不替代主办方推荐的平台调试预览。
 
 Windows 的 SDK 入口为 `scripts/setup.cmd`、`scripts/build.cmd`、`scripts/ports.cmd`。构建与刷写分离，不在预览阶段自动操作实物。工具链、密钥、本机日志、完整资料与设备备份不入库。
 
