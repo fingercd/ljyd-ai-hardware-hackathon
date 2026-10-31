@@ -1,0 +1,3 @@
+[submodule "ljyd-sdk"]
+	path = ljyd-sdk
+	url = https://gitee.com/xj-open/ljyd_xjwb03_agent_public_developer.git

@@ -1,0 +1,33 @@
+# Local tools and machine-specific state
+/.espressif/
+/.local/
+/logs/
+/artifacts/
+/backups/
+/docs/reference/
+/docs/research/
+
+# Build products and caches (release assets are published separately)
+**/build/
+**/__pycache__/
+*.pyc
+*.bin
+*.elf
+*.map
+*.dump
+*.log
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Credentials and local overrides
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets.*
+credentials.*
