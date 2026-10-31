@@ -157,7 +157,7 @@ Windows 的 SDK 入口为 `scripts/setup.cmd`、`scripts/build.cmd`、`scripts/p
 .\scripts\camera-web.cmd
 ```
 
-自动打开本机网页，提供连接检查、PNG 拍照和低帧率无声录像。当前固件一帧一复位，不是实时视频；不要同时运行串口监视器。图像不上传。实板验证范围与限制见 [相机说明](docs/camera-first-capture.md)。
+启动时默认打开开发板串口并保持连接，自动打开本机网页，提供重新连接、PNG 拍照和低帧率无声录像。当前固件一帧一复位，不是实时视频；不要同时运行串口监视器。图像不上传。实板验证范围与限制见 [相机说明](docs/camera-first-capture.md)。
 
 ## 团队
 
