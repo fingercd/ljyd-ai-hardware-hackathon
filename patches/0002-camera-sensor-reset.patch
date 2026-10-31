@@ -1,0 +1,38 @@
+--- a/apps/main/main.c
++++ b/apps/main/main.c
+@@ -48 +48 @@
+-    printf("CAMDIAG_START 25cb-camera-diag1; camera only\n");
++    printf("CAMDIAG_START 25cb-camera-diag2; camera only\n");
+--- a/apps/main/peripheral/bsp_camera.c
++++ b/apps/main/peripheral/bsp_camera.c
+@@ -240 +240,3 @@
+-    unsigned good = 0;
++    unsigned good = 0, received = 0, invalid = 0;
++    uint32_t last_bytes = 0;
++    TickType_t reported = xTaskGetTickCount();
+@@ -248,0 +251,3 @@
++            ++received;
++            last_bytes = buf.bytesused;
++            if (buf.bytesused != s_cam.width * s_cam.height * 2) ++invalid;
+@@ -251,0 +257,2 @@
++                    printf("CAMDIAG_FRAME received=%u good=%u invalid=%u bytes=%u\n",
++                           received, good, invalid, (unsigned)buf.bytesused);
+@@ -261,0 +269,6 @@
++        if ((xTaskGetTickCount() - reported) * portTICK_PERIOD_MS >= 1000) {
++            printf("CAMDIAG_PROGRESS received=%u good=%u invalid=%u last_bytes=%" PRIu32 "\n",
++                   received, good, invalid, last_bytes);
++            fflush(stdout);
++            reported = xTaskGetTickCount();
++        }
+--- a/apps/managed_components/espressif__esp_cam_sensor/sensors/bf3901/bf3901.c
++++ b/apps/managed_components/espressif__esp_cam_sensor/sensors/bf3901/bf3901.c
+@@ -639,4 +639,5 @@
+-    /* Todo, I2C NACK error causes the I2C driver to fail(AEG-2481).
+-     * After fixing the error, re-enable the reset.*/
+-    // bf3901_write(dev->sccb_handle, 0x12, 0x80);//Reset
+-    // delay_ms(5);
++    /* A photo capture restarts the MCU while the sensor may still be powered.
++     * Reset the sensor before loading the format and allow reset to complete.
++     * Validated with this BF3901 board; do not retry/ignore SCCB failures. */
++    ESP_RETURN_ON_ERROR(bf3901_write(dev->sccb_handle, 0x12, 0x80), TAG, "sensor software reset failed");
++    delay_ms(50);
