@@ -7,7 +7,7 @@
 - 采纳主办方建议：优先平台交互创建→调试预览→标准设备接入→个性化开发。SDK 是定制与排障基础，不让底层大改抢在角色和交互验证前；不先训练大模型或搭无关后端。
 - 默认中文，先结论；区分“计划、已实现、编译通过、已烧录、实板验证”。用户不熟悉嵌入式开发，由助手负责常规工程操作；接线、扫码、按键等仅给必要且具体的步骤。
 - 不虚构平台 API、演示、数据、竞赛成绩或硬件能力。模型说“完成”、网页预览成功、MQTT 发布确认均不等于设备实际执行成功。
-- 首先读 README.md、docs/STATUS.md、docs/product.md、docs/challenge-checklist.md 和本次相关说明；不要把 CVPR 等其他项目的服务器、实验或 Git 约定移植到本项目。
+- 首先读 README.md、docs/STATUS.md、docs/product.md、docs/challenge-checklist.md 和本次相关说明；接手/设备/算法问题按需读 docs/handoff-import.md 与 docs/handoff-technical-review.md；不要把 CVPR 等其他项目的服务器、实验或 Git 约定移植到本项目。
 
 ## 2. 工作区与源码边界
 - 用户本机工作区为 `D:\PythonProject\AI硬件`。`D:\PythonProject\ljyd-workspace` 只是指向它的英文目录联接，不是第二份工作树。其他队友使用自己的 checkout 路径。
@@ -52,7 +52,7 @@
 - 助手替本用户提交时 author/committer 为 `fingercd <202753694+fingercd@users.noreply.github.com>`；提交前核对实际身份。队友自己的提交保留本人署名，不伪造或改写。
 - GitHub 使用已有 gh/keyring 登录；不重复登录、清凭据或扩权。设置 fetch.prune=true、pull.ff=only；分叉先比较，再决定 merge/rebase。
 - 默认 Git 日常同步授权不包含删仓、force-push、重写公共历史、更改仓库可见性或新增管理员。队友邀请为 Write，权限升级需明确授权。
-- 比赛最终交付需按实际赛题核对至少两条相关工作流、三类坐姿使用情况、两种硬件反馈、两轮语音和真实平台调用；电脑摄像头/人工事件预演不替代指定硬件验收。正式验收后才创建 hackathon-final，不提前宣称完成。
+- 比赛最终交付需按实际赛题核对至少两条相关工作流、SPI摄像头坐姿与三类使用情境、两种硬件反馈、两轮语音和真实平台调用；电脑摄像头/人工事件预演不替代指定硬件验收。正式验收后才创建 hackathon-final，不提前宣称完成。
 - 固件不作为日常 Git 大文件提交。交付时本地归档匹配 bin/ELF、分区/烧录参数、源码与 SDK commit、有效配置/版本、SHA-256 和实板结果；发布固件附件前再次检查秘密。
 
 ## 8. 文档、验证和分工
