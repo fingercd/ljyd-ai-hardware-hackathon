@@ -34,6 +34,19 @@ def main() -> None:
             if after != before:
                 path.write_bytes(after)
                 changed += 1
+    # The final app object aggregates all component include paths and can exceed
+    # Windows' CreateProcess command-line limit. Keep its flags in a response file.
+    rules_path = build / "CMakeFiles" / "rules.ninja"
+    if rules_path.exists():
+        text = rules_path.read_text(encoding="utf-8")
+        start = text.find("rule C_COMPILER__vb701n.2eelf_unscanned_")
+        if start >= 0:
+            end = text.find("\n\n", start)
+            section = text[start:end]
+            if "$DEFINES $INCLUDES $FLAGS" in section and "rspfile =" not in section:
+                section = section.replace("$DEFINES $INCLUDES $FLAGS", "@$out.flags.rsp")
+                section += "\n  rspfile = $out.flags.rsp\n  rspfile_content = $DEFINES $INCLUDES $FLAGS"
+                rules_path.write_text(text[:start] + section + text[end:], encoding="utf-8")
     print(f"ASCII workspace paths normalized in {changed} generated Ninja/response files.")
 
 
