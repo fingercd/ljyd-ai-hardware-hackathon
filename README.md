@@ -133,7 +133,7 @@ Windows 的 SDK 入口为 `scripts/setup.cmd`、`scripts/build.cmd`、`scripts/p
 | 成员 | GitHub | 协作状态 |
 | :--- | :--- | :--- |
 | fingercd | [@fingercd](https://github.com/fingercd) | 维护者 |
-| Yangyuheng1021 | [@Yangyuheng1021](https://github.com/Yangyuheng1021) | 已邀请，待接受 |
+| Yangyuheng1021 | [@Yangyuheng1021](https://github.com/Yangyuheng1021) | 已加入，Write |
 | Yemi250 | [@Yemi250](https://github.com/Yemi250) | 已邀请，待接受 |
 
 任务分工在 Issue / PR 中明确。开始贡献前请看 [CONTRIBUTING.md](CONTRIBUTING.md)。
