@@ -10,7 +10,7 @@
 | Xtensa GCC | 14.2.0 / esp-14.2.0_20241119 |
 | CMake / Ninja | 3.30.2 / 1.12.1 |
 
-开发脚本使用 SDK 对应的工具版本，不调用 PATH 中其他 CMake 或另装的 latest IDF。依赖安装使用厂商内置的 `tools.json` 和 Espressif v5.4 约束；Python 包的精确安装清单另在本机验收时保存。
+开发脚本使用 SDK 对应的工具版本，不调用 PATH 中其他 CMake 或另装的 latest IDF。激活本机 SDK 环境时设置真实的 VIRTUAL_ENV 标记，避免 CMD AutoRun 误激活科研 Conda；不修改注册表或全局 Conda 配置。依赖安装使用厂商内置的 `tools.json` 和 Espressif v5.4 约束；Python 包的精确安装清单另在本机验收时保存。
 
 ## Windows 入口
 
@@ -45,3 +45,7 @@ set "LJYD_BOOTSTRAP_PYTHON=C:\your-python311\python.exe"
 修改 `sdkconfig.defaults` 不会保证覆盖已存在的 `sdkconfig`。改分区、宏或产品身份后检查实际生效配置，不在不明确范围时运行全量清理。构建、刷写、启动和端到端功能分别验收。
 
 官方依据：[Windows 5.4.1 路径与环境限制](https://docs.espressif.com/projects/esp-idf/en/v5.4.1/esp32s3/get-started/windows-setup.html)、[构建系统](https://docs.espressif.com/projects/esp-idf/en/v5.4.1/esp32s3/api-guides/build-system.html)。
+
+## 源码与文档差异
+
+当前锁定源码实际定义 `CONFIG_QM_POSE_SUPPORT=1`、`CONFIG_LJYD_PLAYBACK_SUPPORT=1`，与上游 README 中“默认关闭”的描述不一致。验收和后续裁剪以实际源码及配置为准；当前准备的是未修改厂商基线的构建，不代表已经裁剪成最小语音固件，更不代表已确认运行时 RAM 足够。刷写前必须核对这些功能是否适合本次实物与演示。

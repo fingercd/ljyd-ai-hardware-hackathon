@@ -11,10 +11,10 @@ PRIVATE_ROOTS = {
     ".espressif", ".local", "logs", "artifacts", "backups",
 }
 PRIVATE_PREFIXES = ("docs/reference/", "docs/research/")
-BINARY_SUFFIXES = {".bin", ".elf", ".map", ".dump", ".pem", ".key", ".p12", ".pfx"}
+BINARY_SUFFIXES = {".bin", ".elf", ".map", ".dump", ".key", ".p12", ".pfx"}
 SECRET_PATTERNS = (
     ("GitHub token", re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,})\b")),
-    ("private key", re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----")),
+    ("private key", re.compile(r"-----BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----")),
     ("product secret", re.compile(r'CONFIG_XJIANG_CLOUD_SECERT\s+"[A-Za-z0-9]{16,}"')),
 )
 REQUIRED = (
