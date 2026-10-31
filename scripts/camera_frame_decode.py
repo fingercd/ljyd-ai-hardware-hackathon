@@ -5,6 +5,8 @@ import base64
 import json
 from pathlib import Path
 import re
+import struct
+import zlib
 
 
 def fnv1a(data: bytes) -> int:
@@ -37,23 +39,47 @@ def decode_capture(raw: bytes):
                      "source": "real_camera_serial_capture"}
 
 
+def frame_png(payload: bytes, metadata: dict) -> bytes:
+    """Native-size RGB PNG, BT.601 limited-range YUV422; no extra packages."""
+    width, height = metadata["width"], metadata["height"]
+    rows = bytearray()
+    for row in range(height):
+        rows.append(0)  # PNG filter: none
+        for offset in range(row * width * 2, (row + 1) * width * 2, 4):
+            a, b, c, d = payload[offset:offset + 4]
+            u, y0, v, y1 = (a, b, c, d) if metadata["fourcc"] == "UYVY" else (b, a, d, c)
+            for y in (y0, y1):
+                luminance = 298 * max(0, y - 16)
+                for value in (luminance + 409 * (v - 128),
+                              luminance - 100 * (u - 128) - 208 * (v - 128),
+                              luminance + 516 * (u - 128)):
+                    rows.append(max(0, min(255, (value + 128) >> 8)))
+
+    def chunk(kind: bytes, data: bytes) -> bytes:
+        return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
+
+    return (b"\x89PNG\r\n\x1a\n"
+            + chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0))
+            + chunk(b"IDAT", zlib.compress(rows)) + chunk(b"IEND", b""))
+
+
+def save_capture(raw: bytes, output: Path) -> dict:
+    payload, metadata = decode_capture(raw)
+    png = frame_png(payload, metadata)
+    output.mkdir(parents=True, exist_ok=True)
+    image_path = output / "camera-native.png"
+    image_path.write_bytes(png)
+    (output / "camera.raw").write_bytes(payload)
+    (output / "frame-metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+    return {"image": str(image_path), **metadata}
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("capture", type=Path)
     parser.add_argument("output", type=Path)
     args = parser.parse_args()
-    payload, metadata = decode_capture(args.capture.read_bytes())
-    import cv2
-    import numpy as np
-    yuv = np.frombuffer(payload, dtype=np.uint8).reshape(metadata["height"], metadata["width"], 2)
-    mode = cv2.COLOR_YUV2BGR_UYVY if metadata["fourcc"] == "UYVY" else cv2.COLOR_YUV2BGR_YUY2
-    bgr = cv2.cvtColor(yuv, mode)
-    args.output.mkdir(parents=True, exist_ok=True)
-    image_path = args.output / "camera-native.png"
-    cv2.imencode(".png", bgr)[1].tofile(str(image_path))
-    (args.output / "camera.raw").write_bytes(payload)
-    (args.output / "frame-metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
-    print(json.dumps({"image": str(image_path), **metadata}, ensure_ascii=False))
+    print(json.dumps(save_capture(args.capture.read_bytes(), args.output), ensure_ascii=False))
 
 
 if __name__ == "__main__":

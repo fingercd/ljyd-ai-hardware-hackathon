@@ -37,7 +37,25 @@ SDK基线为25cb6e5120b37282a01d048883ccc85b6c1350ed。保持原参考目录只�
 
 产物位于 `artifacts/camera-diagnostic-build/`。包装脚本保持ASCII路径；生成Ninja/response文件由normalize_build_paths处理，最终app编译对象使用response文件避免Windows命令行过长。首次冷构建需要编译SDK组件，后续增量构建可复用，不应为一次修改重复全量清理。
 
-解码工具为 `scripts/camera_frame_decode.py`，先验证长度/FNV和帧结束再接受图像。转换图像需已有OpenCV/NumPy；本机使用现有环境读取，没有往科研环境新装依赖。单帧通过115200串口传输，只用于诊断，不是实时视频方案。
+解码工具为 `scripts/camera_frame_decode.py`，先验证长度/FNV和帧结束再接受图像。第一张图使用已有OpenCV/NumPy转换，未安装科研环境依赖；之后命令入口改为标准库PNG编码和BT.601转换，不再要求OpenCV/NumPy。保留原生尺寸，不旋转、不做曝光补偿。单帧通过115200串口传输，只用于诊断，不是实时视频方案。
+
+## 命令行拍照
+
+当前诊断固件不是串口命令解释器，没有可以直接输入的 `capture`/`photo` 固件指令。以下电脑端命令先打开接收，再普通RTS复位一次，接收启动后的单帧，校验后在电脑保存PNG；不烧录、不擦除，也不操作BOOT。
+
+Windows PowerShell：
+
+```powershell
+Set-Location 'D:\PythonProject\AI硬件'
+.\scripts\camera.cmd --list
+.\scripts\camera.cmd --port COM3
+```
+
+若只有一个USB标识1A86:55D3的板子，也可直接执行 `.\scripts\camera.cmd` 自动选端口。`--list`只枚举，不打开或复位。每运行一次拍一张，等待几十秒；Ctrl+C取消电脑接收，不等同立即中断板端输出。请先关闭其他占用该串口的监视器，不要多人同时控制。
+
+成功后输出完整PNG路径，图像保存在 `artifacts/camera-photo-时间戳/camera-native.png`，原始YUV、元数据与串口日志保留在本地忽略目录，不上传云端/公开Git。串口失败或180秒未收齐会报错退出，不自动重试或重新烧录。开串口也可能有控制线瞬态，不声称完全无复位影响。
+
+入口和接收/校验/PNG编码通过离线单元测试，串口枚举已在本机验证；该新入口尚未另做一次实板拍照，不能拿历史手工采集替代新入口端到端验收。
 
 ## 下一步
 
