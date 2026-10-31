@@ -3,6 +3,8 @@ rem CALL from a batch file. Environment changes affect this process only.
 call "%~dp0workspace.cmd"
 if errorlevel 1 exit /b 1
 set "IDF_PYTHON_ENV_PATH=%IDF_TOOLS_PATH%\python_env\idf5.4_py3.11_env"
+rem Mark the real active venv so shell AutoRun hooks do not activate Conda.
+set "VIRTUAL_ENV=%IDF_PYTHON_ENV_PATH%"
 if not exist "%IDF_PYTHON_ENV_PATH%\Scripts\python.exe" (
   echo ERROR: ESP-IDF Python environment is not installed. Run scripts\setup.cmd.
   exit /b 1
