@@ -7,13 +7,16 @@ Unicode path that the Windows Xtensa linker cannot open. Only generated
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
 
 def main() -> None:
     alias = os.path.abspath(os.environ["LJYD_WORKSPACE"])
     real = os.path.realpath(alias)
-    build = Path(alias) / "artifacts" / "build"
+    build = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(alias) / "artifacts" / "build"
+    if not build.resolve().is_relative_to((Path(real) / "artifacts").resolve()):
+        raise ValueError("Build directory must be under workspace artifacts")
     pairs = []
     for separator in ("/", "\\"):
         original = real.replace("\\", separator).replace("/", separator) + separator

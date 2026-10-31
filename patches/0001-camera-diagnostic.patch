@@ -1,0 +1,126 @@
+diff --git a/apps/main/main.c b/apps/main/main.c
+index 2d25d9d05..c8f317c39 100644
+--- a/apps/main/main.c
++++ b/apps/main/main.c
+@@ -46,0 +47,6 @@ void qm_application_start(void)
++#if defined(CONFIG_APP_CAMERA_TEST) && CONFIG_APP_CAMERA_TEST
++    printf("CAMDIAG_START 25cb-camera-diag1; camera only\n");
++    fflush(stdout);
++    if (bsp_camera_start() != ESP_OK) { printf("CAMDIAG_ERROR camera initialization failed\n"); fflush(stdout); }
++    return;
++#endif
+diff --git a/apps/main/peripheral/bsp_camera.c b/apps/main/peripheral/bsp_camera.c
+index c69fa9a8c..9e8f249fa 100644
+--- a/apps/main/peripheral/bsp_camera.c
++++ b/apps/main/peripheral/bsp_camera.c
+@@ -150 +150 @@ static esp_err_t cam_setup_buffers(void)
+-        s_cam.fd = open(ESP_VIDEO_SPI_DEVICE_NAME, O_RDWR);
++        s_cam.fd = open(ESP_VIDEO_SPI_DEVICE_NAME, O_RDWR | O_NONBLOCK);
+@@ -208 +208 @@ static esp_err_t cam_stream_on(void)
+-static void cam_stream_task(void *arg)
++static void cam_diag_dump(const uint8_t *data, size_t len)
+@@ -210,5 +210,27 @@ static void cam_stream_task(void *arg)
+-    uint32_t frames = 0;
+-    uint32_t good = 0;
+-    uint32_t empty = 0;
+-    TickType_t t0 = xTaskGetTickCount();
+-    const uint32_t expect = s_cam.width * s_cam.height * 2;
++    static const char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
++    uint32_t hash = 2166136261u;
++    for (size_t i = 0; i < len; ++i) hash = (hash ^ data[i]) * 16777619u;
++    printf("\nCAMFRAME_BEGIN w=%" PRIu32 " h=%" PRIu32 " fourcc=%08" PRIx32 " bytes=%u fnv1a=%08" PRIx32 "\n",
++           s_cam.width, s_cam.height, s_cam.pixel_format, (unsigned)len, hash);
++    fflush(stdout);
++    for (size_t pos = 0; pos < len; pos += 96) {
++        char encoded[129];
++        size_t n = len - pos < 96 ? len - pos : 96;
++        size_t j = 0;
++        for (size_t i = 0; i < n; i += 3) {
++            uint32_t bits = (uint32_t)data[pos+i] << 16;
++            if (i+1 < n) bits |= (uint32_t)data[pos+i+1] << 8;
++            if (i+2 < n) bits |= data[pos+i+2];
++            encoded[j++] = alphabet[(bits >> 18) & 63];
++            encoded[j++] = alphabet[(bits >> 12) & 63];
++            encoded[j++] = i+1 < n ? alphabet[(bits >> 6) & 63] : '=';
++            encoded[j++] = i+2 < n ? alphabet[bits & 63] : '=';
++        }
++        encoded[j] = 0;
++        printf("CAMDATA:%s\n", encoded);
++        fflush(stdout);
++        vTaskDelay(pdMS_TO_TICKS(5));
++    }
++    printf("CAMFRAME_END\n");
++    fflush(stdout);
++}
+@@ -215,0 +238,4 @@ static void cam_stream_task(void *arg)
++static void cam_stream_task(void *arg)
++{
++    unsigned good = 0;
++    TickType_t started = xTaskGetTickCount();
+@@ -217,2 +242,0 @@ static void cam_stream_task(void *arg)
+-    ESP_LOGI(LOG_TAG, "stream task on core %d", (int)xPortGetCoreID());
+-
+@@ -221 +244,0 @@ static void cam_stream_task(void *arg)
+-
+@@ -225,6 +248,8 @@ static void cam_stream_task(void *arg)
+-        if (ioctl(s_cam.fd, VIDIOC_DQBUF, &buf) != 0) {
+-            if (errno != EAGAIN && errno != EINTR) {
+-                ESP_LOGE(LOG_TAG, "VIDIOC_DQBUF failed, errno=%d", errno);
+-                vTaskDelay(pdMS_TO_TICKS(1000));
+-            } else {
+-                vTaskDelay(pdMS_TO_TICKS(CAM_DQBUF_POLL_MS));
++        if (ioctl(s_cam.fd, VIDIOC_DQBUF, &buf) == 0) {
++            if (buf.index < CAM_BUF_NUM && buf.bytesused == s_cam.width * s_cam.height * 2) {
++                ++good;
++                if (good == 5) {
++                    cam_diag_dump((const uint8_t *)s_cam.buffer[buf.index], buf.bytesused);
++                    (void)ioctl(s_cam.fd, VIDIOC_QBUF, &buf);
++                    break;
++                }
+@@ -232,16 +257,4 @@ static void cam_stream_task(void *arg)
+-            continue;
+-        }
+-
+-        frames++;
+-        if (buf.bytesused == expect) {
+-            good++;
+-        } else {
+-            empty++;
+-        }
+-        if ((frames % CAM_LOG_EVERY_FRAMES) == 0) {
+-            TickType_t now = xTaskGetTickCount();
+-            uint32_t ms = (uint32_t)((now - t0) * portTICK_PERIOD_MS);
+-            ESP_LOGI(LOG_TAG, "got %u frames good=%u empty=%u last_bytes=%u dt=%u ms",
+-                     (unsigned)frames, (unsigned)good, (unsigned)empty,
+-                     (unsigned)buf.bytesused, (unsigned)ms);
+-            t0 = now;
++            (void)ioctl(s_cam.fd, VIDIOC_QBUF, &buf);
++        } else if (errno != EAGAIN && errno != EINTR) {
++            printf("CAMDIAG_ERROR dequeue errno=%d\n", errno);
++            break;
+@@ -249,3 +262,3 @@ static void cam_stream_task(void *arg)
+-
+-        if (ioctl(s_cam.fd, VIDIOC_QBUF, &buf) != 0) {
+-            ESP_LOGE(LOG_TAG, "VIDIOC_QBUF return failed, errno=%d", errno);
++        if ((xTaskGetTickCount() - started) * portTICK_PERIOD_MS > 20000) {
++            printf("CAMDIAG_ERROR no valid frame within 20 seconds\n");
++            break;
+@@ -252,0 +266 @@ static void cam_stream_task(void *arg)
++        vTaskDelay(pdMS_TO_TICKS(20));
+@@ -253,0 +268,6 @@ static void cam_stream_task(void *arg)
++    cam_teardown();
++    s_available = false;
++    s_stream_task = NULL;
++    printf("CAMDIAG_STOP camera stream stopped\n");
++    fflush(stdout);
++    vTaskDelete(NULL);
+diff --git a/apps/main/qm_config/qm_config.h b/apps/main/qm_config/qm_config.h
+index 87df55350..258815514 100644
+--- a/apps/main/qm_config/qm_config.h
++++ b/apps/main/qm_config/qm_config.h
+@@ -150 +150 @@ int qm_vsnprintf(char *str, size_t count, const char *fmt, va_list ap);
+-#define CONFIG_QM_POSE_SUPPORT 1
++#define CONFIG_QM_POSE_SUPPORT 0
+@@ -179 +179 @@ int qm_vsnprintf(char *str, size_t count, const char *fmt, va_list ap);
+-#define CONFIG_APP_CAMERA_TEST 0
++#define CONFIG_APP_CAMERA_TEST 1
