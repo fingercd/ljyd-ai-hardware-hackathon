@@ -149,6 +149,16 @@ py -3.11 -m study_dino examples/session-preview.jsonl
 
 Windows 的 SDK 入口为 `scripts/setup.cmd`、`scripts/build.cmd`、`scripts/ports.cmd`。构建与刷写分离，不在预览阶段自动操作实物。工具链、密钥、本机日志、完整资料与设备备份不入库。
 
+### 开发板摄像头网页
+
+已有相机诊断固件时，在项目目录运行：
+
+```powershell
+.\scripts\camera-web.cmd
+```
+
+启动时默认打开开发板串口并保持连接，自动打开本机网页，提供重新连接、PNG 拍照和低帧率无声录像。当前固件一帧一复位，不是实时视频；不要同时运行串口监视器。图像不上传。实板验证范围与限制见 [相机说明](docs/camera-first-capture.md)。
+
 ## 团队
 
 | 成员 | GitHub | 协作状态 |
